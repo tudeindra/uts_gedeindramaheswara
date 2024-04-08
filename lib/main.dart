@@ -1,13 +1,46 @@
+// ignore_for_file: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
+
 import 'package:flutter/material.dart';
 
 void main() => runApp(MyApp());
 
 class MyAppState extends ChangeNotifier {
   List<Map<String, dynamic>> cartItems = [];
-
+  final List<Map<String, dynamic>> products = [
+    {
+      'image': 'assets/images/nike1.jpg',
+      'name': 'Nike Air Max',
+      'price': '\$150',
+    },
+    {
+      'image': 'assets/images/nike2.jpg',
+      'name': 'Nike Air Force 1',
+      'price': '\$120',
+    },
+    {
+      'image': 'assets/images/nike3.jpg',
+      'name': 'Nike Zoom',
+      'price': '\$180',
+    },
+    {
+      'image': 'assets/images/nike4.jpg',
+      'name': 'Nike React',
+      'price': '\$200',
+    },
+    {
+      'image': 'assets/images/nike5.jpg',
+      'name': 'Nike VaporMax',
+      'price': '\$220',
+    },
+    {
+      'image': 'assets/images/nike6.jpg',
+      'name': 'Nike Dunk',
+      'price': '\$170',
+    },
+  ];
   void addToCart(Map<String, dynamic> product) {
     cartItems.add(product);
-    notifyListeners();
+    notifyListeners(); // Panggil notifyListeners() di sini
   }
 }
 
@@ -78,27 +111,26 @@ class HomePage extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/product_detail');
-                  },
-                  style: ElevatedButton.styleFrom(
-                    primary: Colors.black,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: MediaQuery.of(context).size.width *
-                          0.4, // responsive width
-                      vertical: 20,
+                FractionallySizedBox(
+                  widthFactor: 0.4,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/product_detail');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.black,
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                  child: Text(
-                    'Shop Now',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                    child: Text(
+                      'Shop Now',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -170,7 +202,7 @@ class ShopPage extends StatelessWidget {
           children: [
             _buildSearchBar(),
             SizedBox(height: 10),
-            _buildHotPicksSection(context),
+            _buildHotPicksSection(context, appState),
           ],
         ),
       ),
@@ -204,32 +236,38 @@ class ShopPage extends StatelessWidget {
     );
   }
 
-  Widget _buildHotPicksSection(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics:
-          ClampingScrollPhysics(), // changed physics to ClampingScrollPhysics
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount:
-            MediaQuery.of(context).orientation == Orientation.portrait
-                ? 2
-                : 4, // adaptive cross axis count
-        crossAxisSpacing: 10.0,
-        mainAxisSpacing: 10.0,
+  Widget _buildHotPicksSection(BuildContext context, MyAppState appState) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    return Container(
+      height: 400,
+      child: GridView.builder(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 0.75,
+        ),
+        itemCount: appState.products.length,
+        itemBuilder: (context, index) {
+          return _buildProductItem(
+              context, screenWidth, appState.products[index]);
+        },
       ),
-      itemCount: products.length,
-      itemBuilder: (context, index) {
-        return _buildProductItem(context, products[index]);
-      },
     );
   }
 
-  Widget _buildProductItem(BuildContext context, Map<String, dynamic> product) {
+  Widget _buildProductItem(
+      BuildContext context, double screenWidth, Map<String, dynamic> product) {
+    final itemWidth = screenWidth * 0.4;
+
     return GestureDetector(
       onTap: () {
         Navigator.pushNamed(context, '/product_detail');
       },
       child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 8),
+        width: itemWidth,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
@@ -245,17 +283,16 @@ class ShopPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(8),
-                topRight: Radius.circular(8),
-              ),
-              child: Image.asset(
-                product['image'],
-                fit: BoxFit.cover,
-                height:
-                    MediaQuery.of(context).size.width / 3, // responsive height
-                width: double.infinity,
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(8),
+                  topRight: Radius.circular(8),
+                ),
+                child: Image.asset(
+                  product['image'],
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
             Padding(
@@ -281,11 +318,10 @@ class ShopPage extends StatelessWidget {
                 ],
               ),
             ),
-            Spacer(), // Spacer added to push shopping cart icon to the bottom
             IconButton(
               icon: Icon(Icons.shopping_cart),
               onPressed: () {
-                _addToCart(context, product);
+                appState.addToCart(product);
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                   content: Text('Item added to cart'),
                 ));
@@ -295,10 +331,6 @@ class ShopPage extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  void _addToCart(BuildContext context, Map<String, dynamic> product) {
-    appState.addToCart(product);
   }
 }
 
@@ -402,6 +434,15 @@ class PaymentPage extends StatelessWidget {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          _makePayment(context);
+        },
+        label: Text('Pay Now'),
+        icon: Icon(Icons.payment),
+        backgroundColor: Colors.blue,
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
